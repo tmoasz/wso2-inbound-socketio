@@ -19,6 +19,7 @@ public class SocketIOListener extends GenericInboundListener {
 	private static final Log log = LogFactory.getLog(SocketIOListener.class);
 	private Properties properties;
 	private String address;
+	private Socket socketIO;
 	
 	public SocketIOListener(InboundProcessorParams params) {
 	       super(params);
@@ -30,36 +31,32 @@ public class SocketIOListener extends GenericInboundListener {
 
 	public void destroy() {
 		// TODO Auto-generated method stub
-		
+		if(socketIO != null) {
+			socketIO.disconnect();
+		}
 	}
 
 	public void init() {
 		try {
-			ExecutorService exec = params.getSynapseEnvironment().getExecutorService();
-			
 			Options socketIoOptions = fromProp(properties);
-			final Socket socket = IO.socket(address, socketIoOptions);
-			socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
-
+			
+			socketIO = IO.socket(address, socketIoOptions);
+			socketIO.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
 				  //@Override
 				  public void call(Object... args) {
-				    socket.emit("foo", "hi");
-				    socket.disconnect();
+				    //socketIO.emit("connected", "hi");
+				    //socketIO.disconnect();
 				  }
-
 				}).on("event", new Emitter.Listener() {
-
 				  public void call(Object... args) {
-					  JSONObject obj = (JSONObject)args[0];
+					  JSONObject jsonObject = (JSONObject)args[0];
+					  //TODO: Implement messageInjector
 				  }
-
 				}).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
-
 				  //@Override
 				  public void call(Object... args) {}
-
 				});
-				socket.connect();
+				socketIO.connect();
 			
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
@@ -67,10 +64,10 @@ public class SocketIOListener extends GenericInboundListener {
 		}
 	}
 
-	private Options fromProp(Properties properties2) {
-		Options option = new Options();
-		//option.
-		return null;
+	private Options fromProp(Properties properties) {
+		//TODO implement options
+		Options options = new Options();
+		options.port = Integer.parseInt(properties.getProperty(SocketIOConstans.SOCKETIO_PORT, SocketIOConstans.SOCKETIO_PORT_DEFAULT));
+		return options;
 	}
-	
 }
